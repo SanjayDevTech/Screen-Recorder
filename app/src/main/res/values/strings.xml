@@ -1,0 +1,13 @@
+<resources>
+    <string name="app_name">Ezy Screen Recorder</string>
+
+
+
+
+
+    <string name="stop_recording">Stop Recording</string>
+    <string name="no_ads_fully_free">NO ADS, FULLY FREE</string>
+
+    <string name="start_recording">Start Recording</string>
+
+</resources>
