@@ -1,26 +1,54 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/rootLayout"
     android:background="#FFFFFF"
     android:orientation="vertical"
     android:gravity="center">
 
-    <TextView
-        android:id="@+id/textView"
-        android:layout_width="144dp"
-        android:layout_height="wrap_content"
-        android:text="@string/no_ads_fully_free"
-        android:textAppearance="@style/TextAppearance.AppCompat" />
-
-    <Button
-        android:id="@+id/btn_action"
+    <androidx.appcompat.widget.Toolbar
+        android:id="@+id/toolbar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="@string/start_recording" />
+        app:title="@string/app_name"
+        app:titleTextColor="@android:color/background_light"
+        android:background="?android:attr/colorPrimary"
 
+        android:minHeight="?attr/actionBarSize"
 
+        />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:gravity="center"
+        android:background="?attr/backgroundcolor"
+        android:orientation="vertical"
+        android:id="@+id/base">
+
+        <TextView
+            android:id="@+id/textView"
+            android:layout_width="144dp"
+            android:layout_height="wrap_content"
+            android:text="@string/no_ads_fully_free"
+            android:textColor="?attr/textcolor"
+             />
+
+        <Button
+            android:id="@+id/btn_action"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:elevation="10dp"
+
+            android:background="?attr/buttoncolor"
+            android:textColor="?attr/textcolor"
+
+            android:text="@string/start_recording" />
+
+    </LinearLayout>
 
 
 </LinearLayout>

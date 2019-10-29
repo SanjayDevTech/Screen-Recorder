@@ -1,32 +1,45 @@
 package com.sanjay.ezyscreenrecorder;
 import android.Manifest;
-import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.content.res.Configuration;
+import android.graphics.Color;
+import android.graphics.Point;
 import android.hardware.display.DisplayManager;
 import android.hardware.display.VirtualDisplay;
 import android.media.MediaRecorder;
+import android.media.MediaScannerConnection;
 import android.media.projection.MediaProjection;
 import android.media.projection.MediaProjectionManager;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 
 import android.provider.Settings;
-import android.support.annotation.NonNull;
-import android.support.design.widget.Snackbar;
-import android.support.v4.app.ActivityCompat;
-import android.support.v7.app.AppCompatActivity;
+import androidx.annotation.NonNull;
+import com.google.android.material.snackbar.Snackbar;
+
+import androidx.appcompat.app.AppCompatDelegate;
+import androidx.appcompat.widget.Toolbar;
+import androidx.core.app.ActivityCompat;
+import androidx.appcompat.app.AppCompatActivity;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.util.SparseIntArray;
+import android.view.Display;
 import android.view.Surface;
 import android.view.View;
+import android.view.Window;
+import android.view.WindowManager;
 import android.widget.Button;
 
+import android.widget.LinearLayout;
+import android.widget.TextView;
 import android.widget.Toast;
+
 
 
 import java.util.Timer;
@@ -38,6 +51,9 @@ import java.text.SimpleDateFormat;
 import java.io.IOException;
 import java.util.Calendar;
 
+import static androidx.appcompat.app.AppCompatDelegate.MODE_NIGHT_NO;
+import static androidx.appcompat.app.AppCompatDelegate.MODE_NIGHT_YES;
+
 public class MainActivity extends AppCompatActivity {
     private Timer timer = new Timer();
     private TimerTask timerTask;
@@ -48,7 +64,12 @@ public class MainActivity extends AppCompatActivity {
     private AlertDialog.Builder dialog;
     private static final int REQUEST_CODE = 1000;
     private int mScreenDensity;
-    Button btn_action;
+    private Button btn_action;
+
+    private LinearLayout base;
+    private TextView textView;
+    private Toolbar toolbar;
+
     private MediaProjectionManager mProjectionManager;
     private static final int DISPLAY_WIDTH = 720;
     private static final int DISPLAY_HEIGHT = 1280;
@@ -62,6 +83,7 @@ public class MainActivity extends AppCompatActivity {
     private Calendar calendar = Calendar.getInstance();
 
 
+
     static {
         ORIENTATIONS.append(Surface.ROTATION_0, 90);
         ORIENTATIONS.append(Surface.ROTATION_90, 0);
@@ -72,15 +94,37 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+
+        int currentNightMode = this.getResources().getConfiguration().uiMode& Configuration.UI_MODE_NIGHT_MASK;
+        switch (currentNightMode){
+            case Configuration.UI_MODE_NIGHT_NO:
+
+                setTheme(R.style.AppTheme);
+                break;
+            case Configuration.UI_MODE_NIGHT_YES:
+
+                setTheme(R.style.DarkTheme);
+                break;
+
+
+        }
+
+
         setContentView(R.layout.activity_main);
+
+
+
         dialog = new AlertDialog.Builder(this);
-
-
-
+        base = (LinearLayout) findViewById(R.id.base);
+        textView = (TextView) findViewById(R.id.textView);
+        toolbar = (Toolbar) findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
 
 
         DisplayMetrics metrics = new DisplayMetrics();
         getWindowManager().getDefaultDisplay().getMetrics(metrics);
+
         mScreenDensity = metrics.densityDpi;
 
         mMediaRecorder = new MediaRecorder();
@@ -88,10 +132,21 @@ public class MainActivity extends AppCompatActivity {
         mProjectionManager = (MediaProjectionManager) getSystemService(Context.MEDIA_PROJECTION_SERVICE);
 
 
-
-
-
         btn_action = (Button) findViewById(R.id.btn_action);
+        int currentNightMode1 = this.getResources().getConfiguration().uiMode& Configuration.UI_MODE_NIGHT_MASK;
+        switch (currentNightMode1){
+            case Configuration.UI_MODE_NIGHT_NO:
+                lighttheme();
+                setTheme(R.style.AppTheme);
+                break;
+            case Configuration.UI_MODE_NIGHT_YES:
+                darktheme();
+                setTheme(R.style.DarkTheme);
+                break;
+
+
+        }
+
         btn_action.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -100,6 +155,61 @@ public class MainActivity extends AppCompatActivity {
 
             }
         });
+
+    }
+
+
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (AppCompatDelegate.getDefaultNightMode()== MODE_NIGHT_YES){
+            lighttheme();
+
+        }else if (AppCompatDelegate.getDefaultNightMode()== MODE_NIGHT_NO){
+            darktheme();
+        }
+    }
+
+    private void lighttheme() {
+        setTheme(R.style.AppTheme);
+        base.setBackgroundColor(Color.parseColor("#ffffff"));
+        btn_action.setTextColor(Color.parseColor("#000000"));
+        textView.setTextColor(Color.parseColor("#000000"));
+        btn_action.setBackgroundColor(0xFFFFFFFF);
+        toolbar.setBackgroundColor(0xFF008577);
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
+        getWindow().setStatusBarColor(0xFF1A554D);
+    }
+
+    private void darktheme() {
+        setTheme(R.style.DarkTheme);
+        base.setBackgroundColor(Color.parseColor("#000000"));
+        btn_action.setTextColor(Color.parseColor("#ffffff"));
+        textView.setTextColor(Color.parseColor("#ffffff"));
+        btn_action.setBackgroundColor(0xFF121212);
+        toolbar.setBackgroundColor(0xFF121212);
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
+        getWindow().setStatusBarColor(0xFF000000);
+    }
+
+
+    @Override
+    public void onConfigurationChanged(@NonNull Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+        int currentNightMode = newConfig.uiMode& Configuration.UI_MODE_NIGHT_MASK;
+        switch (currentNightMode){
+            case Configuration.UI_MODE_NIGHT_NO:
+                lighttheme();
+                setTheme(R.style.AppTheme);
+                break;
+            case Configuration.UI_MODE_NIGHT_YES:
+                darktheme();
+                setTheme(R.style.DarkTheme);
+                break;
+
+
+        }
     }
 
 
@@ -147,6 +257,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private VirtualDisplay createVirtualDisplay() {
+
         return mMediaProjection.createVirtualDisplay("MainActivity", DISPLAY_WIDTH, DISPLAY_HEIGHT, mScreenDensity,
                 DisplayManager.VIRTUAL_DISPLAY_FLAG_AUTO_MIRROR, mMediaRecorder.getSurface(), null, null);
     }
@@ -160,6 +271,8 @@ public class MainActivity extends AppCompatActivity {
                  file.mkdirs();
              }
             calendar=Calendar.getInstance();
+
+
             videofile= "/storage/emulated/0/Ezy/Video".concat(new SimpleDateFormat("dd_MM_yyyy_hh_mm_ss_a").format(calendar.getTime()).concat(".mp4"));
             mMediaRecorder.setAudioSource(MediaRecorder.AudioSource.MIC);
             mMediaRecorder.setVideoSource(MediaRecorder.VideoSource.SURFACE);
@@ -178,6 +291,7 @@ public class MainActivity extends AppCompatActivity {
 
 
 
+
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -193,6 +307,15 @@ public class MainActivity extends AppCompatActivity {
         destroyMediaProjection();
         isRecording = false;
         actionBtnReload();
+        MediaScannerConnection.scanFile(this,new String[]{videofile.toString()},null,
+                new MediaScannerConnection.OnScanCompletedListener(){
+                    @Override
+                    public void onScanCompleted(String path, Uri uri) {
+                        Log.i("External","scanned"+path+":");
+                        Log.i("External","-> uri="+uri);
+
+                    }
+                });
         dialog.setTitle("Video is saved...");
         dialog.setMessage("Saved in /storage/emulated/0/Ezy/");
         dialog.setPositiveButton("View Video", new DialogInterface.OnClickListener() {
@@ -231,6 +354,7 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode,resultCode,data);
         if (requestCode != REQUEST_CODE) {
             Log.e(TAG, "Unknown request code: " + requestCode);
             return;
