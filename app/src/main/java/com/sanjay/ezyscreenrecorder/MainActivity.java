@@ -1,6 +1,9 @@
 package com.sanjay.ezyscreenrecorder;
 import android.Manifest;
 import android.app.AlertDialog;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
+import android.app.Service;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -22,6 +25,7 @@ import android.provider.Settings;
 import androidx.annotation.NonNull;
 import com.google.android.material.snackbar.Snackbar;
 
+import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatDelegate;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.app.ActivityCompat;
@@ -41,7 +45,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 
-
+import java.io.FileWriter;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.io.File;
@@ -91,10 +95,11 @@ public class MainActivity extends AppCompatActivity {
         ORIENTATIONS.append(Surface.ROTATION_270, 180);
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.O)
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
+        startForegroundService(new Intent(MainActivity.this, BackGround.class));
 
         int currentNightMode = this.getResources().getConfiguration().uiMode& Configuration.UI_MODE_NIGHT_MASK;
         switch (currentNightMode){
@@ -110,10 +115,7 @@ public class MainActivity extends AppCompatActivity {
 
         }
 
-
         setContentView(R.layout.activity_main);
-
-
 
         dialog = new AlertDialog.Builder(this);
         base = (LinearLayout) findViewById(R.id.base);
@@ -127,7 +129,7 @@ public class MainActivity extends AppCompatActivity {
 
         mScreenDensity = metrics.densityDpi;
 
-        mMediaRecorder = new MediaRecorder();
+
 
         mProjectionManager = (MediaProjectionManager) getSystemService(Context.MEDIA_PROJECTION_SERVICE);
 
@@ -223,6 +225,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
+    @RequiresApi(api = Build.VERSION_CODES.O)
     public void onToggleScreenShare() {
         if (!isRecording) {
             String[] PERMISSIONS = {
@@ -245,12 +248,17 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.O)
     private void shareScreen() {
         if (mMediaProjection == null) {
             startActivityForResult(mProjectionManager.createScreenCaptureIntent(), REQUEST_CODE);
             return;
         }
+
+
         mVirtualDisplay = createVirtualDisplay();
+
+
         mMediaRecorder.start();
         isRecording = true;
         actionBtnReload();
@@ -262,7 +270,9 @@ public class MainActivity extends AppCompatActivity {
                 DisplayManager.VIRTUAL_DISPLAY_FLAG_AUTO_MIRROR, mMediaRecorder.getSurface(), null, null);
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.O)
     private void initRecorder() {
+        mMediaRecorder = new MediaRecorder();
         try {
 
 
@@ -272,21 +282,29 @@ public class MainActivity extends AppCompatActivity {
              }
             calendar=Calendar.getInstance();
 
+            Log.e("e","Before");
+            videofile= "/storage/emulated/0/Ezy/Video_".concat(new SimpleDateFormat("dd_MM_yyyy_hh_mm_ss_a").format(calendar.getTime()).concat(".mp4"));
+            File file1 = new File(videofile);
+            Log.e("e","after");
 
-            videofile= "/storage/emulated/0/Ezy/Video".concat(new SimpleDateFormat("dd_MM_yyyy_hh_mm_ss_a").format(calendar.getTime()).concat(".mp4"));
+            FileWriter fileWriter = new FileWriter(file1);
+            fileWriter.append("");
+            fileWriter.flush();
+            fileWriter.close();
             mMediaRecorder.setAudioSource(MediaRecorder.AudioSource.MIC);
             mMediaRecorder.setVideoSource(MediaRecorder.VideoSource.SURFACE);
-            mMediaRecorder.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4); //THREE_GPP
-            mMediaRecorder.setOutputFile(videofile);
+            mMediaRecorder.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4);
+            Log.e("e","after");
             mMediaRecorder.setVideoSize(DISPLAY_WIDTH, DISPLAY_HEIGHT);
             mMediaRecorder.setVideoEncoder(MediaRecorder.VideoEncoder.H264);
             mMediaRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AMR_NB);
             mMediaRecorder.setVideoEncodingBitRate(512 * 1000);
-            mMediaRecorder.setVideoFrameRate(30); // 30
+            mMediaRecorder.setVideoFrameRate(30);
             mMediaRecorder.setVideoEncodingBitRate(3000000);
             int rotation = getWindowManager().getDefaultDisplay().getRotation();
             int orientation = ORIENTATIONS.get(rotation + 90);
             mMediaRecorder.setOrientationHint(orientation);
+            mMediaRecorder.setOutputFile(videofile);
             mMediaRecorder.prepare();
 
 
@@ -307,6 +325,7 @@ public class MainActivity extends AppCompatActivity {
         destroyMediaProjection();
         isRecording = false;
         actionBtnReload();
+
         MediaScannerConnection.scanFile(this,new String[]{videofile.toString()},null,
                 new MediaScannerConnection.OnScanCompletedListener(){
                     @Override
@@ -336,7 +355,9 @@ public class MainActivity extends AppCompatActivity {
 
             }
         });
-        dialog.create().show();
+        dialog.create();
+        dialog.show();
+
     }
 
 
@@ -347,11 +368,14 @@ public class MainActivity extends AppCompatActivity {
             mMediaProjection.stop();
             mMediaProjection = null;
         }
+
+
         Log.i(TAG, "MediaProjection Stopped");
     }
 
 
 
+    @RequiresApi(api = Build.VERSION_CODES.O)
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode,resultCode,data);
@@ -365,10 +389,14 @@ public class MainActivity extends AppCompatActivity {
             actionBtnReload();
             return;
         }
+
         mMediaProjectionCallback = new MediaProjectionCallback();
+
+
         mMediaProjection = mProjectionManager.getMediaProjection(resultCode, data);
         btn_action.setEnabled(false);
         moveTaskToBack(true);
+
 
         timerTask = new TimerTask() {
             @Override
@@ -384,12 +412,12 @@ public class MainActivity extends AppCompatActivity {
                                     @Override
                                     public void run() {
                                         btn_action.setEnabled(true);
+
                                         mMediaProjection.registerCallback(mMediaProjectionCallback, null);
-                                        mVirtualDisplay = createVirtualDisplay();
+                                        mVirtualDisplay = mMediaProjection.createVirtualDisplay("MainActivity", DISPLAY_WIDTH, DISPLAY_HEIGHT, mScreenDensity,
+                                                DisplayManager.VIRTUAL_DISPLAY_FLAG_AUTO_MIRROR, mMediaRecorder.getSurface(), null, null);
                                         isRecording = true;
                                         actionBtnReload();
-
-
 
                                         mMediaRecorder.start();
 
@@ -398,15 +426,16 @@ public class MainActivity extends AppCompatActivity {
                                 });
                             }
                         };
-                        timer.schedule(timerTask, (int)(500));
+                        timer.schedule(timerTask, (int)(100));
                     }
                 });
             }
         };
-        timer.schedule(timerTask,(int)(500));
+        timer.schedule(timerTask,(int)(100));
 
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.O)
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String permissions[], @NonNull int[] grantResults) {
         switch (requestCode) {
@@ -448,6 +477,7 @@ public class MainActivity extends AppCompatActivity {
             if (isRecording) {
                 isRecording = false;
                 actionBtnReload();
+
                 mMediaRecorder.stop();
                 mMediaRecorder.reset();
             }
@@ -461,6 +491,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public void onDestroy() {
         super.onDestroy();
+        stopService(new Intent(MainActivity.this, BackGround.class));
         destroyMediaProjection();
     }
 
@@ -472,6 +503,7 @@ public class MainActivity extends AppCompatActivity {
                     new View.OnClickListener() {
                         @Override
                         public void onClick(View v) {
+
                             mMediaRecorder.stop();
                             mMediaRecorder.reset();
                             Log.v(TAG, "Stopping Recording");

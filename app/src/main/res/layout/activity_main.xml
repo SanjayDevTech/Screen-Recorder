@@ -34,8 +34,7 @@
             android:layout_width="144dp"
             android:layout_height="wrap_content"
             android:text="@string/no_ads_fully_free"
-            android:textColor="?attr/textcolor"
-             />
+            android:textColor="?attr/textcolor" />
 
         <Button
             android:id="@+id/btn_action"

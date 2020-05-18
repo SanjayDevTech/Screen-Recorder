@@ -5,8 +5,6 @@ import android.content.pm.PackageManager;
 import android.os.Build;
 import androidx.core.app.ActivityCompat;
 
-
-
 public class Function {
 
     public static  boolean hasPermissions(Context context, String... permissions) {
@@ -19,6 +17,5 @@ public class Function {
         }
         return true;
     }
-
 
 }
