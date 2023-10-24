@@ -135,7 +135,6 @@ class MainActivity : AppCompatActivity() {
 
     private val broadcastReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
-            println("Hello $intent")
             if (intent.getStringExtra("action") == "STOP") {
                 stopRecording()
             }
