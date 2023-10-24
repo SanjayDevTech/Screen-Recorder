@@ -1,32 +1,9 @@
 <resources>
 
-    <!-- Base application theme. -->
-    <style name="AppTheme" parent="Theme.AppCompat.DayNight.NoActionBar">
-        <!-- Customize your theme here. -->
-
+    <style name="AppTheme" parent="Theme.AppCompat.Light.DarkActionBar">
         <item name="colorPrimary">@color/colorPrimary</item>
         <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
         <item name="colorAccent">@color/colorAccent</item>
-        <item name="backgroundcolor">#fcfcfc</item>
-        <item name="cardbackground">#ffffff</item>
-        <item name="textcolor">#000000</item>
-        <item name="tintcolor">#000000</item>
-        <item name="buttoncolor">#ffffff</item>
-
     </style>
-    <style name="DarkTheme" parent="Theme.AppCompat.DayNight.NoActionBar">
-        <!-- Customize your theme here. -->
-
-        <item name="colorPrimary">#121212</item>
-        <item name="colorPrimaryDark">#000000</item>
-        <item name="colorAccent">#FFFFFF</item>
-        <item name="backgroundcolor">#000000</item>
-        <item name="cardbackground">#ffffff</item>
-        <item name="textcolor">#ffffff</item>
-        <item name="tintcolor">#ffffff</item>
-        <item name="buttoncolor">#121212</item>
-
-    </style>
-
 
 </resources>

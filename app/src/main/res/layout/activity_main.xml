@@ -1,53 +1,31 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/root"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:id="@+id/rootLayout"
-    android:background="#FFFFFF"
-    android:orientation="vertical"
-    android:gravity="center">
+    android:gravity="center"
+    android:orientation="vertical">
 
-    <androidx.appcompat.widget.Toolbar
-        android:id="@+id/toolbar"
-        android:layout_width="match_parent"
+    <Button
+        android:id="@+id/start_record_button"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        app:title="@string/app_name"
-        app:titleTextColor="@android:color/background_light"
-        android:background="?android:attr/colorPrimary"
+        android:elevation="10dp"
+        android:text="@string/start_recording" />
 
-        android:minHeight="?attr/actionBarSize"
+    <Button
+        android:id="@+id/stop_record_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:elevation="10dp"
+        android:text="@string/stop_recording" />
 
-        />
-
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:gravity="center"
-        android:background="?attr/backgroundcolor"
-        android:orientation="vertical"
-        android:id="@+id/base">
-
-        <TextView
-            android:id="@+id/textView"
-            android:layout_width="144dp"
-            android:layout_height="wrap_content"
-            android:text="@string/no_ads_fully_free"
-            android:textColor="?attr/textcolor" />
-
-        <Button
-            android:id="@+id/btn_action"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:elevation="10dp"
-
-            android:background="?attr/buttoncolor"
-            android:textColor="?attr/textcolor"
-
-            android:text="@string/start_recording" />
-
-    </LinearLayout>
-
+    <TextView
+        android:id="@+id/count_text"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_margin="8dp"
+        android:textColor="@android:color/black"
+        android:textSize="24sp" />
 
 </LinearLayout>
