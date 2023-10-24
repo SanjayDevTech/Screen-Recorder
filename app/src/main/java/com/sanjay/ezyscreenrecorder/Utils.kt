@@ -17,10 +17,12 @@ import androidx.activity.ComponentActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
+import com.sanjay.ezyscreenrecorder.Utils.buildNotification
 
 
 object Utils {
     private const val CHANNEL_ID = "Recording_Service"
+
     fun Service.buildNotification(pendingIntent: PendingIntent? = null): Notification {
 
         val nm = ContextCompat.getSystemService(this, NotificationManager::class.java)
@@ -40,7 +42,9 @@ object Utils {
             .setSmallIcon(R.drawable.ic_launcher_foreground)
             .setOngoing(true)
             .apply {
-                addAction(R.drawable.baseline_stop_24, "Stop", pendingIntent)
+                if (pendingIntent != null) {
+                    addAction(R.drawable.baseline_stop_24, "Stop", pendingIntent)
+                }
             }
             .build()
     }

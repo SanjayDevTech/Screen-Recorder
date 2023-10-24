@@ -83,6 +83,13 @@ class MainActivity : AppCompatActivity() {
         ActivityCompat.startForegroundService(this, serviceIntent)
     }
 
+    private fun startForegroundServiceReally() {
+        val serviceIntent = Intent(InProgressRecordingNotificationService.START_RECORDING_REALLY).also {
+            it.setClass(this, InProgressRecordingNotificationService::class.java)
+        }
+        ActivityCompat.startForegroundService(this, serviceIntent)
+    }
+
     private fun stopForegroundService() {
         val serviceIntent = Intent(InProgressRecordingNotificationService.STOP_RECORDING).also {
             it.setClass(this, InProgressRecordingNotificationService::class.java)
@@ -124,6 +131,7 @@ class MainActivity : AppCompatActivity() {
                 }
                 val file = File(folder, fileName)
                 val isStarted = screenRecorder.start(file, mediaProjection)
+                startForegroundServiceReally()
                 if (isStarted) {
                     stopButton.isEnabled = true
                 } else {
