@@ -58,13 +58,9 @@ class ScreenRecorder(
 
         mMediaRecorder.setOutputFile(file.absolutePath)
         mMediaRecorder.prepare()
-
-        println("ScreenRecorderClass profile = ${profile.videoFrameWidth} ${profile.videoFrameHeight}")
-        println("ScreenRecorderClass screen = ${mWidth} ${mHeight}")
     }
 
-    fun start(file: File, mediaProjection: MediaProjection?): Boolean {
-        if (mediaProjection == null) return false
+    fun start(file: File, mediaProjection: MediaProjection): Boolean {
         mMediaProjection = mediaProjection
         mediaProjection.registerCallback(mMediaProjectionCallback, null)
         try {
@@ -89,8 +85,10 @@ class ScreenRecorder(
         return false
     }
 
-    fun stop(): String {
-        val outputFilePath = mFile?.path?.split("/")?.last()
+    fun stop(): File {
+        if (!isRecording) {
+            throw IllegalStateException("Screen Recorder is not in recording state. Cannot stop")
+        }
         mMediaRecorder.stop()
         mMediaRecorder.reset()
         mVirtualDisplay?.release()
@@ -98,7 +96,7 @@ class ScreenRecorder(
         mMediaProjection?.stop()
         mVirtualDisplay = null
         mMediaProjection = null
-        return outputFilePath ?: "Unknown file"
+        return mFile ?: throw IllegalStateException("Output file is null. Cannot stop")
     }
 
     val isRecording: Boolean

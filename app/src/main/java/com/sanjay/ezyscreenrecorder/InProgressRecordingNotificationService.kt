@@ -10,6 +10,7 @@ import android.os.IBinder
 import androidx.core.app.PendingIntentCompat
 import androidx.core.app.ServiceCompat
 import androidx.core.content.ContextCompat
+import com.sanjay.ezyscreenrecorder.Utils.buildInProgressRecordingNotification
 import com.sanjay.ezyscreenrecorder.Utils.buildNotification
 
 class InProgressRecordingNotificationService : Service() {
@@ -64,14 +65,14 @@ class InProgressRecordingNotificationService : Service() {
             PendingIntent.FLAG_UPDATE_CURRENT,
             false
         )
-        val notification = buildNotification(stopPendingIntent)
+        val notification = buildInProgressRecordingNotification(stopPendingIntent)
         val nm = ContextCompat.getSystemService(this, NotificationManager::class.java)
         nm?.notify(NOTIFICATION_ID, notification)
     }
 
     private fun startForegroundNotification() {
 
-        val notification = buildNotification()
+        val notification = buildInProgressRecordingNotification()
         ServiceCompat.startForeground(
             this,
             NOTIFICATION_ID,

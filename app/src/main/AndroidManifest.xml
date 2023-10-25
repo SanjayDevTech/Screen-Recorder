@@ -13,16 +13,27 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-        <receiver android:name=".RecordingEventReceiver" android:exported="true" />
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="com.sanjay.ezyscreenrecorder.file_provider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/filepaths" />
+        </provider>
+        <receiver
+            android:name=".RecordingEventReceiver"
+            android:exported="false" />
         <service
             android:name=".InProgressRecordingNotificationService"
             android:enabled="true"
-            android:stopWithTask="true"
             android:exported="false"
-            android:foregroundServiceType="mediaProjection" />
+            android:foregroundServiceType="mediaProjection"
+            android:stopWithTask="true" />
         <activity
-            android:exported="true"
-            android:name=".MainActivity">
+            android:name=".MainActivity"
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 

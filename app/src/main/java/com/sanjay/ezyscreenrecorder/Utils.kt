@@ -21,32 +21,78 @@ import com.sanjay.ezyscreenrecorder.Utils.buildNotification
 
 
 object Utils {
-    private const val CHANNEL_ID = "Recording_Service"
+    enum class NotificationChannelType(
+        val channelId: String,
+        val channelTitle: String,
+    ) {
+        RecordingService("Recording_Service", "Recording in-progress notification"),
+        RecordingCompleted("Recording_Completed", "Recording Preview notification"),
+    }
 
-    fun Service.buildNotification(pendingIntent: PendingIntent? = null): Notification {
+
+    fun Context.buildNotification(
+        title: String,
+        text: String,
+        isOngoing: Boolean,
+        channelType: NotificationChannelType,
+        pendingIntent: PendingIntent? = null,
+        action: String = "",
+        actionPendingIntent: PendingIntent? = null,
+    ): Notification {
 
         val nm = ContextCompat.getSystemService(this, NotificationManager::class.java)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             nm?.createNotificationChannel(
                 NotificationChannel(
-                    CHANNEL_ID,
-                    "Channel title",
+                    channelType.channelId,
+                    channelType.channelTitle,
                     NotificationManager.IMPORTANCE_MIN
                 )
             )
         }
 
-        return NotificationCompat.Builder(this, CHANNEL_ID)
-            .setContentTitle("Recording Service")
-            .setContentText("Recording")
+        return NotificationCompat.Builder(this, channelType.channelId)
+            .setContentTitle(title)
+            .setContentText(text)
             .setSmallIcon(R.drawable.ic_launcher_foreground)
-            .setOngoing(true)
+            .setOngoing(isOngoing)
             .apply {
+                if (actionPendingIntent != null) {
+                    addAction(R.drawable.baseline_stop_24, action, actionPendingIntent)
+                }
                 if (pendingIntent != null) {
-                    addAction(R.drawable.baseline_stop_24, "Stop", pendingIntent)
+                    setContentIntent(pendingIntent)
                 }
             }
             .build()
+    }
+
+    fun Context.buildInProgressRecordingNotification(
+        actionPendingIntent: PendingIntent? = null,
+    ): Notification {
+        return buildNotification(
+            title = "Ezy Recording",
+            text = "Recording is in progress",
+            isOngoing = true,
+            channelType = NotificationChannelType.RecordingService,
+            pendingIntent = null,
+            action = "Stop",
+            actionPendingIntent = actionPendingIntent,
+        )
+    }
+
+    fun Context.buildRecordingSavedNotification(
+        pendingIntent: PendingIntent,
+        parentDir: String,
+        outDir: String,
+    ): Notification {
+        return buildNotification(
+            title = "Recording saved",
+            text = "Recording saved to $parentDir > $outDir\nClick to open the Recording",
+            isOngoing = false,
+            channelType = NotificationChannelType.RecordingCompleted,
+            pendingIntent = pendingIntent,
+        )
     }
 
 

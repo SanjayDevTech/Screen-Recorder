@@ -1,11 +1,12 @@
 package com.sanjay.ezyscreenrecorder
 
 import android.Manifest
+import android.app.NotificationManager
+import android.app.PendingIntent
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
-import android.hardware.camera2.CameraManager
 import android.media.projection.MediaProjection
 import android.media.projection.MediaProjectionManager
 import android.os.Build
@@ -17,11 +18,13 @@ import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
+import androidx.core.app.PendingIntentCompat
 import androidx.core.content.ContextCompat
+import androidx.core.content.FileProvider
 import androidx.core.util.component1
 import androidx.core.util.component2
 import androidx.lifecycle.lifecycleScope
-import androidx.localbroadcastmanager.content.LocalBroadcastManager
+import com.sanjay.ezyscreenrecorder.Utils.buildRecordingSavedNotification
 import com.sanjay.ezyscreenrecorder.Utils.getRotation
 import com.sanjay.ezyscreenrecorder.Utils.getScreenDensity
 import com.sanjay.ezyscreenrecorder.Utils.getSize
@@ -42,7 +45,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private var mediaProjection: MediaProjection? = null
-    private var mediaProjectionManager: MediaProjectionManager? = null
+    private lateinit var mediaProjectionManager: MediaProjectionManager
 
     private lateinit var startButton: Button
     private lateinit var stopButton: Button
@@ -114,7 +117,8 @@ class MainActivity : AppCompatActivity() {
                     delay(1000)
                 }
                 countText.text = ""
-                mediaProjection = mediaProjectionManager?.getMediaProjection(resultCode, data)
+                val lMediaProjection = mediaProjectionManager.getMediaProjection(resultCode, data)
+                mediaProjection = lMediaProjection
                 val fileName = String.format(
                     "Recording_%s.mp4",
                     SimpleDateFormat("dd_MM_yyyy_hh_mm_ss_a", Locale.ENGLISH).format(
@@ -130,7 +134,7 @@ class MainActivity : AppCompatActivity() {
                     folder.mkdir()
                 }
                 val file = File(folder, fileName)
-                val isStarted = screenRecorder.start(file, mediaProjection)
+                val isStarted = screenRecorder.start(file, lMediaProjection)
                 startForegroundServiceReally()
                 if (isStarted) {
                     stopButton.isEnabled = true
@@ -169,7 +173,7 @@ class MainActivity : AppCompatActivity() {
         screenRecorder = ScreenRecorder(this, screenDensity, rotation, width, height)
 
         mediaProjectionManager =
-            ContextCompat.getSystemService(this, MediaProjectionManager::class.java)
+            ContextCompat.getSystemService(this, MediaProjectionManager::class.java)!!
 
         startButton.setOnClickListener {
             if (!isRecordAudioPermissionGranted) {
@@ -198,20 +202,37 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun startRecording() {
-        requestScreenCapture.launch(mediaProjectionManager?.createScreenCaptureIntent())
+        requestScreenCapture.launch(mediaProjectionManager.createScreenCaptureIntent())
         startButton.isEnabled = false
     }
 
     private fun stopRecording() {
         stopForegroundService()
-        val outputFileName = screenRecorder.stop()
+        val outFile = screenRecorder.stop()
+        val pendingIntent = PendingIntentCompat.getActivity(this, 1, openIntentForVideo(outFile),
+            PendingIntent.FLAG_ONE_SHOT, false)
+        if (pendingIntent != null) {
+            val notification = buildRecordingSavedNotification(pendingIntent, PARENT_DIRECTORY, DIRECTORY)
+            val nm = ContextCompat.getSystemService(this, NotificationManager::class.java)
+            nm?.notify(786, notification)
+        }
         stopButton.isEnabled = false
         startButton.isEnabled = true
         Toast.makeText(
             this,
-            "Saved to $PARENT_DIRECTORY > $DIRECTORY > $outputFileName",
+            "Saved to $PARENT_DIRECTORY > $DIRECTORY",
             Toast.LENGTH_LONG
         ).show()
+    }
+
+    private fun openIntentForVideo(outFile: File): Intent {
+        val intent = Intent(Intent.ACTION_VIEW).apply {
+            val fileUri =
+                FileProvider.getUriForFile(this@MainActivity, "$packageName.file_provider", outFile)
+            setDataAndType(fileUri, "video/*")
+            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        }
+        return Intent.createChooser(intent, "Open With")
     }
 
     override fun onDestroy() {
