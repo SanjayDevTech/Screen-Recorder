@@ -6,6 +6,7 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Rect
 import android.os.Build
@@ -13,13 +14,48 @@ import android.util.DisplayMetrics
 import android.util.Size
 import android.util.TypedValue
 import android.view.WindowInsets
+import android.widget.Toast
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
+import androidx.core.app.PendingIntentCompat
 import androidx.core.content.ContextCompat
+import androidx.core.content.FileProvider
+import java.io.File
 
 
 object Utils {
+    private fun Context.openIntentForVideo(outFile: File): Intent {
+        val intent = Intent(Intent.ACTION_VIEW).also {
+            val fileUri =
+                FileProvider.getUriForFile(this, "$packageName.file_provider", outFile)
+            it.setDataAndType(fileUri, "video/*")
+            it.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        }
+        return Intent.createChooser(intent, "Open With")
+    }
+
+    fun Context.showVideoSavedNotification(file: File) {
+        val pendingIntent = PendingIntentCompat.getActivity(
+            this, 1, openIntentForVideo(file),
+            PendingIntent.FLAG_ONE_SHOT, false
+        )
+        if (pendingIntent != null) {
+            val notification =
+                buildRecordingSavedNotification(
+                    pendingIntent,
+                    MainActivity.PARENT_DIRECTORY,
+                    MainActivity.DIRECTORY
+                )
+            val nm = ContextCompat.getSystemService(this, NotificationManager::class.java)
+            nm?.notify(786, notification)
+        }
+        Toast.makeText(
+            this,
+            "Saved to ${MainActivity.PARENT_DIRECTORY} > ${MainActivity.DIRECTORY}",
+            Toast.LENGTH_LONG
+        ).show()
+    }
 
     enum class NotificationChannelType(
         val channelId: String,
@@ -34,7 +70,7 @@ object Utils {
         RecordingCompleted(
             "Recording_Completed",
             "Recording Preview notification",
-            NotificationManagerCompat.IMPORTANCE_DEFAULT
+            NotificationManagerCompat.IMPORTANCE_HIGH
         ),
     }
 
@@ -71,6 +107,7 @@ object Utils {
                 }
                 if (pendingIntent != null) {
                     setContentIntent(pendingIntent)
+                    setAutoCancel(true)
                 }
             }
             .build()
@@ -97,7 +134,7 @@ object Utils {
     ): Notification {
         return buildNotification(
             title = "Recording saved",
-            text = "Recording saved to $parentDir > $outDir\nClick to open the Recording",
+            text = "Click to open the Recording",
             isOngoing = false,
             channelType = NotificationChannelType.RecordingCompleted,
             pendingIntent = pendingIntent,

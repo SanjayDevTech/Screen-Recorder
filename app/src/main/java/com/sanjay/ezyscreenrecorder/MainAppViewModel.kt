@@ -6,10 +6,11 @@ import android.media.projection.MediaProjection
 import androidx.lifecycle.AndroidViewModel
 import com.sanjay.ezyscreenrecorder.Utils.screenDensity
 import com.sanjay.ezyscreenrecorder.Utils.screenRotation
+import com.sanjay.ezyscreenrecorder.Utils.showVideoSavedNotification
 import com.sanjay.ezyscreenrecorder.Utils.windowSize
 import java.io.File
 
-class MainAppViewModel(application: Application) : AndroidViewModel(application) {
+class MainAppViewModel(private val application: Application) : AndroidViewModel(application) {
     private val screenRecorder = ScreenRecorder(application)
 
     fun startRecording(activity: Activity, file: File, mediaProjection: MediaProjection): Boolean {
@@ -29,7 +30,8 @@ class MainAppViewModel(application: Application) : AndroidViewModel(application)
     override fun onCleared() {
         super.onCleared()
         if (isRecording()) {
-            stopRecording()
+            val outFile = stopRecording()
+            application.showVideoSavedNotification(outFile)
         }
     }
 
