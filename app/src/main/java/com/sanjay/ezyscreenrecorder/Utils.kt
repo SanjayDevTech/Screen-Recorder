@@ -4,7 +4,6 @@ import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
-import android.app.Service
 import android.content.Context
 import android.content.pm.PackageManager
 import android.graphics.Rect
@@ -17,7 +16,6 @@ import androidx.activity.ComponentActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
-import com.sanjay.ezyscreenrecorder.Utils.buildNotification
 
 
 object Utils {
@@ -103,7 +101,7 @@ object Utils {
         ) == PackageManager.PERMISSION_GRANTED
     }
 
-    fun ComponentActivity.getScreenDensity(): Int {
+    fun ComponentActivity.screenDensity(): Int {
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
             val floatDensity = windowManager.currentWindowMetrics.density
             val floatDpi = TypedValue.applyDimension(
@@ -123,7 +121,7 @@ object Utils {
         }
     }
 
-    fun ComponentActivity.getRotation(): Int {
+    fun ComponentActivity.screenRotation(): Int {
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             display?.rotation ?: windowManager.defaultDisplay.rotation
         } else {
@@ -131,7 +129,7 @@ object Utils {
         }
     }
 
-    fun ComponentActivity.getSize(): Size {
+    fun ComponentActivity.windowSize(): Size {
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             val metrics = windowManager.currentWindowMetrics
             val windowInsets: WindowInsets = metrics.windowInsets
@@ -177,7 +175,7 @@ object Utils {
         640,
     ).sortedDescending()
 
-    fun getCompatibleScreenSize(width: Int, height: Int): Size {
+    fun compatibleScreenSize(width: Int, height: Int): Size {
         var outWidth = width
         var outHeight = height
         for (validWidth in validWidthSizes) {

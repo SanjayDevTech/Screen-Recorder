@@ -1,33 +1,26 @@
 package com.sanjay.ezyscreenrecorder
 
 import android.content.Context
-import android.hardware.Camera
-import android.hardware.camera2.CameraManager
 import android.hardware.display.DisplayManager
 import android.hardware.display.VirtualDisplay
 import android.media.CamcorderProfile
 import android.media.MediaRecorder
 import android.media.projection.MediaProjection
 import android.os.Build
+import android.util.Size
 import android.util.SparseIntArray
 import android.view.Surface
 import java.io.File
 import java.io.IOException
 
 class ScreenRecorder(
-    context: Context,
-    private val mScreenDensity: Int,
-    private val mRotation: Int,
-    private val mWidth: Int,
-    private val mHeight: Int
+    context: Context
 ) {
-    private val profile = CamcorderProfile.get(CamcorderProfile.QUALITY_HIGH).also {
-        val size = Utils.getCompatibleScreenSize(mWidth, mHeight)
-        it.videoFrameWidth = size.width
-        it.videoFrameHeight = size.height
-    }
-    private val displayWidth = profile.videoFrameWidth
-    private val displayHeight = profile.videoFrameHeight
+    private lateinit var mScreenSize: Size
+    private lateinit var mProfile: CamcorderProfile
+    private var mRotation: Int = 0
+    private var mScreenDensity: Int = 0
+
     private var mMediaProjection: MediaProjection? = null
     private var mVirtualDisplay: VirtualDisplay? = null
     private val mMediaRecorder: MediaRecorder =
@@ -36,14 +29,13 @@ class ScreenRecorder(
         } else {
             MediaRecorder()
         }
-    private var mFile: File? = null
+    private lateinit var mFile: File
     private val mMediaProjectionCallback: MediaProjection.Callback =
         object : MediaProjection.Callback() {
             override fun onStop() {
-                if (isRecording) {
-                    mMediaRecorder.stop()
-                    mMediaRecorder.reset()
-                }
+                mMediaRecorder.stop()
+                mMediaRecorder.reset()
+                mVirtualDisplay?.release()
             }
         }
 
@@ -54,10 +46,21 @@ class ScreenRecorder(
         mMediaRecorder.setVideoSource(MediaRecorder.VideoSource.SURFACE)
         val orientation = ORIENTATIONS[mRotation + 90]
         mMediaRecorder.setOrientationHint(orientation)
-        mMediaRecorder.setProfile(profile)
-
+        mMediaRecorder.setProfile(mProfile)
         mMediaRecorder.setOutputFile(file.absolutePath)
         mMediaRecorder.prepare()
+    }
+
+    fun prepare(screenDensity: Int, rotation: Int, screenSize: Size) {
+        val compatibleScreenSize = Utils.compatibleScreenSize(screenSize.width, screenSize.height)
+        val profile = CamcorderProfile.get(CamcorderProfile.QUALITY_HIGH).also {
+            it.videoFrameWidth = compatibleScreenSize.width
+            it.videoFrameHeight = compatibleScreenSize.height
+        }
+        mScreenSize = compatibleScreenSize
+        mProfile = profile
+        mRotation = rotation
+        mScreenDensity = screenDensity
     }
 
     fun start(file: File, mediaProjection: MediaProjection): Boolean {
@@ -67,8 +70,8 @@ class ScreenRecorder(
             initRecorder(file)
             mVirtualDisplay = mediaProjection.createVirtualDisplay(
                 "Ezy Screen Recorder",
-                displayWidth,
-                displayHeight,
+                mScreenSize.width,
+                mScreenSize.height,
                 mScreenDensity,
                 DisplayManager.VIRTUAL_DISPLAY_FLAG_AUTO_MIRROR,
                 mMediaRecorder.surface,
@@ -96,7 +99,7 @@ class ScreenRecorder(
         mMediaProjection?.stop()
         mVirtualDisplay = null
         mMediaProjection = null
-        return mFile ?: throw IllegalStateException("Output file is null. Cannot stop")
+        return mFile
     }
 
     val isRecording: Boolean

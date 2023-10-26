@@ -25,9 +25,9 @@ import androidx.core.util.component1
 import androidx.core.util.component2
 import androidx.lifecycle.lifecycleScope
 import com.sanjay.ezyscreenrecorder.Utils.buildRecordingSavedNotification
-import com.sanjay.ezyscreenrecorder.Utils.getRotation
-import com.sanjay.ezyscreenrecorder.Utils.getScreenDensity
-import com.sanjay.ezyscreenrecorder.Utils.getSize
+import com.sanjay.ezyscreenrecorder.Utils.screenRotation
+import com.sanjay.ezyscreenrecorder.Utils.screenDensity
+import com.sanjay.ezyscreenrecorder.Utils.windowSize
 import com.sanjay.ezyscreenrecorder.Utils.hasPermissions
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -87,9 +87,10 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun startForegroundServiceReally() {
-        val serviceIntent = Intent(InProgressRecordingNotificationService.START_RECORDING_REALLY).also {
-            it.setClass(this, InProgressRecordingNotificationService::class.java)
-        }
+        val serviceIntent =
+            Intent(InProgressRecordingNotificationService.START_RECORDING_REALLY).also {
+                it.setClass(this, InProgressRecordingNotificationService::class.java)
+            }
         ActivityCompat.startForegroundService(this, serviceIntent)
     }
 
@@ -134,10 +135,16 @@ class MainActivity : AppCompatActivity() {
                     folder.mkdir()
                 }
                 val file = File(folder, fileName)
-                val isStarted = screenRecorder.start(file, lMediaProjection)
-                startForegroundServiceReally()
+                val screenDensity = screenDensity()
+                val rotation = screenRotation()
+                val screenSize = windowSize()
+
+                screenRecorder.prepare(screenDensity, rotation, screenSize)
+                val isStarted =
+                    screenRecorder.start(file, lMediaProjection)
                 if (isStarted) {
                     stopButton.isEnabled = true
+                    startForegroundServiceReally()
                 } else {
                     startButton.isEnabled = true
                     stopForegroundService()
@@ -166,11 +173,7 @@ class MainActivity : AppCompatActivity() {
         val receiverFlags = ContextCompat.RECEIVER_NOT_EXPORTED
         ContextCompat.registerReceiver(this, broadcastReceiver, intentFilter, receiverFlags)
 
-        val screenDensity = getScreenDensity()
-        val rotation = getRotation()
-        val (width, height) = getSize()
-
-        screenRecorder = ScreenRecorder(this, screenDensity, rotation, width, height)
+        screenRecorder = ScreenRecorder(this)
 
         mediaProjectionManager =
             ContextCompat.getSystemService(this, MediaProjectionManager::class.java)!!
@@ -209,10 +212,13 @@ class MainActivity : AppCompatActivity() {
     private fun stopRecording() {
         stopForegroundService()
         val outFile = screenRecorder.stop()
-        val pendingIntent = PendingIntentCompat.getActivity(this, 1, openIntentForVideo(outFile),
-            PendingIntent.FLAG_ONE_SHOT, false)
+        val pendingIntent = PendingIntentCompat.getActivity(
+            this, 1, openIntentForVideo(outFile),
+            PendingIntent.FLAG_ONE_SHOT, false
+        )
         if (pendingIntent != null) {
-            val notification = buildRecordingSavedNotification(pendingIntent, PARENT_DIRECTORY, DIRECTORY)
+            val notification =
+                buildRecordingSavedNotification(pendingIntent, PARENT_DIRECTORY, DIRECTORY)
             val nm = ContextCompat.getSystemService(this, NotificationManager::class.java)
             nm?.notify(786, notification)
         }
