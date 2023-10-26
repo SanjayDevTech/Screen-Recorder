@@ -3,7 +3,6 @@ package com.sanjay.ezyscreenrecorder
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import androidx.localbroadcastmanager.content.LocalBroadcastManager
 
 class RecordingEventReceiver : BroadcastReceiver() {
 

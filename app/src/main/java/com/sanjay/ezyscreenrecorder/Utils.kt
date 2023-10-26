@@ -1,5 +1,6 @@
 package com.sanjay.ezyscreenrecorder
 
+import android.app.Activity
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -12,19 +13,29 @@ import android.util.DisplayMetrics
 import android.util.Size
 import android.util.TypedValue
 import android.view.WindowInsets
-import androidx.activity.ComponentActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
+import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 
 
 object Utils {
+
     enum class NotificationChannelType(
         val channelId: String,
         val channelTitle: String,
+        val importance: Int,
     ) {
-        RecordingService("Recording_Service", "Recording in-progress notification"),
-        RecordingCompleted("Recording_Completed", "Recording Preview notification"),
+        RecordingService(
+            "Recording_Service",
+            "Recording in-progress notification",
+            NotificationManagerCompat.IMPORTANCE_MIN
+        ),
+        RecordingCompleted(
+            "Recording_Completed",
+            "Recording Preview notification",
+            NotificationManagerCompat.IMPORTANCE_DEFAULT
+        ),
     }
 
 
@@ -44,7 +55,7 @@ object Utils {
                 NotificationChannel(
                     channelType.channelId,
                     channelType.channelTitle,
-                    NotificationManager.IMPORTANCE_MIN
+                    channelType.importance
                 )
             )
         }
@@ -101,7 +112,7 @@ object Utils {
         ) == PackageManager.PERMISSION_GRANTED
     }
 
-    fun ComponentActivity.screenDensity(): Int {
+    fun Activity.screenDensity(): Int {
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
             val floatDensity = windowManager.currentWindowMetrics.density
             val floatDpi = TypedValue.applyDimension(
@@ -121,7 +132,7 @@ object Utils {
         }
     }
 
-    fun ComponentActivity.screenRotation(): Int {
+    fun Activity.screenRotation(): Int {
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             display?.rotation ?: windowManager.defaultDisplay.rotation
         } else {
@@ -129,7 +140,7 @@ object Utils {
         }
     }
 
-    fun ComponentActivity.windowSize(): Size {
+    fun Activity.windowSize(): Size {
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             val metrics = windowManager.currentWindowMetrics
             val windowInsets: WindowInsets = metrics.windowInsets

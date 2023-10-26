@@ -11,7 +11,6 @@ import androidx.core.app.PendingIntentCompat
 import androidx.core.app.ServiceCompat
 import androidx.core.content.ContextCompat
 import com.sanjay.ezyscreenrecorder.Utils.buildInProgressRecordingNotification
-import com.sanjay.ezyscreenrecorder.Utils.buildNotification
 
 class InProgressRecordingNotificationService : Service() {
     override fun onBind(intent: Intent): IBinder? {

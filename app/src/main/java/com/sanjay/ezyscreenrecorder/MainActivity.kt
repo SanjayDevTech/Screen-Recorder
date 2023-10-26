@@ -7,7 +7,6 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
-import android.media.projection.MediaProjection
 import android.media.projection.MediaProjectionManager
 import android.os.Build
 import android.os.Bundle
@@ -16,18 +15,14 @@ import android.widget.Button
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.app.PendingIntentCompat
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
-import androidx.core.util.component1
-import androidx.core.util.component2
 import androidx.lifecycle.lifecycleScope
 import com.sanjay.ezyscreenrecorder.Utils.buildRecordingSavedNotification
-import com.sanjay.ezyscreenrecorder.Utils.screenRotation
-import com.sanjay.ezyscreenrecorder.Utils.screenDensity
-import com.sanjay.ezyscreenrecorder.Utils.windowSize
 import com.sanjay.ezyscreenrecorder.Utils.hasPermissions
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -40,18 +35,17 @@ class MainActivity : AppCompatActivity() {
 
     companion object {
         const val COUNT_DOWN = 3
-        val PARENT_DIRECTORY: String = Environment.DIRECTORY_DOWNLOADS
+        val PARENT_DIRECTORY: String = Environment.DIRECTORY_DOCUMENTS
         const val DIRECTORY = "Ezy Recordings"
     }
 
-    private var mediaProjection: MediaProjection? = null
     private lateinit var mediaProjectionManager: MediaProjectionManager
 
     private lateinit var startButton: Button
     private lateinit var stopButton: Button
     private lateinit var countText: TextView
 
-    private lateinit var screenRecorder: ScreenRecorder
+    private val mainAppViewModel: MainAppViewModel by viewModels()
 
     private val isNotificationPermissionGranted: Boolean
         get() = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
@@ -119,7 +113,6 @@ class MainActivity : AppCompatActivity() {
                 }
                 countText.text = ""
                 val lMediaProjection = mediaProjectionManager.getMediaProjection(resultCode, data)
-                mediaProjection = lMediaProjection
                 val fileName = String.format(
                     "Recording_%s.mp4",
                     SimpleDateFormat("dd_MM_yyyy_hh_mm_ss_a", Locale.ENGLISH).format(
@@ -135,13 +128,9 @@ class MainActivity : AppCompatActivity() {
                     folder.mkdir()
                 }
                 val file = File(folder, fileName)
-                val screenDensity = screenDensity()
-                val rotation = screenRotation()
-                val screenSize = windowSize()
-
-                screenRecorder.prepare(screenDensity, rotation, screenSize)
                 val isStarted =
-                    screenRecorder.start(file, lMediaProjection)
+                    mainAppViewModel.startRecording(this@MainActivity, file, lMediaProjection)
+
                 if (isStarted) {
                     stopButton.isEnabled = true
                     startForegroundServiceReally()
@@ -173,8 +162,6 @@ class MainActivity : AppCompatActivity() {
         val receiverFlags = ContextCompat.RECEIVER_NOT_EXPORTED
         ContextCompat.registerReceiver(this, broadcastReceiver, intentFilter, receiverFlags)
 
-        screenRecorder = ScreenRecorder(this)
-
         mediaProjectionManager =
             ContextCompat.getSystemService(this, MediaProjectionManager::class.java)!!
 
@@ -202,6 +189,11 @@ class MainActivity : AppCompatActivity() {
             stopButton.isEnabled = false
         }
 
+        if (mainAppViewModel.isRecording()) {
+            startButton.isEnabled = false
+            stopButton.isEnabled = true
+        }
+
     }
 
     private fun startRecording() {
@@ -211,7 +203,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun stopRecording() {
         stopForegroundService()
-        val outFile = screenRecorder.stop()
+        val outFile = mainAppViewModel.stopRecording()
         val pendingIntent = PendingIntentCompat.getActivity(
             this, 1, openIntentForVideo(outFile),
             PendingIntent.FLAG_ONE_SHOT, false
@@ -244,9 +236,6 @@ class MainActivity : AppCompatActivity() {
     override fun onDestroy() {
         super.onDestroy()
         unregisterReceiver(broadcastReceiver)
-        if (screenRecorder.isRecording) {
-            stopRecording()
-        }
     }
 
 }
